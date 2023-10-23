@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
     diffs = None
 
+    # when there is a pull request merge from feature branch to Main/Master branch
     if len(commits[0].parents) > 1:
         current_commit = repo.commit(commits[0].parents[0])
         last_commit = repo.commit(commits[0].parents[1])
