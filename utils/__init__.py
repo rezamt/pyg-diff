@@ -29,7 +29,6 @@ def git_changes(path, branch='master', commit_depth=1):
             diffs = {
                 diff.a_path: diff for diff in commit.diff(parent)
             }
-            init_commit = True
         else:
             diffs = {
                 diff.a_path: diff for diff in parent.diff(commit)
@@ -50,21 +49,17 @@ def git_changes(path, branch='master', commit_depth=1):
                         break
 
             # Update the stats with the additional information
-            if init_commit:
-                diff_type = 'A'
-            else:
-                diff_type = diff_type(diff)
             stats.update({
                 'file': os.path.join(path, objpath),
                 'commit': commit.hexsha,
                 'author': commit.author.email,
                 'timestamp': commit.authored_datetime.strftime(DATE_TIME_FORMAT),
                 'size': diff_size(diff),
-                'type': diff_type,
+                'status': diff_status(diff, (parent == EMPTY_TREE_SHA)),
             })
 
             yield stats
-        if depth == 0 or init_commit == True:
+        if depth == 0 or parent == EMPTY_TREE_SHA:
             break
 
 
@@ -84,10 +79,11 @@ def diff_size(diff):
     return diff.a_blob.size - diff.b_blob.size
 
 
-def diff_type(diff):
+def diff_status(diff, init_commit):
     """
     Determines the type of the diff by looking at the diff flags.
     """
+    if init_commit: return 'A'
     if diff.renamed: return 'R'
     if diff.deleted_file: return 'D'
     if diff.new_file: return 'A'
